@@ -1,3 +1,1 @@
-a bot to troll others and hold bot ideas
-
-Usage: ./bot.bash <channel> [file containing key]
+Usage: ./nabb.bash <channel>
