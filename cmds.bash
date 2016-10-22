@@ -86,24 +86,25 @@ elif `echo $saying | grep -i 'nabb: spam\b' > /dev/null` ; then
         fi 
     fi
 elif `echo $saying | grep -i '^nabb:' | grep -i 'who ' | grep 'runs\|owns\|maintains' | grep "?" > /dev/null` ; then
-    lookbot=$(echo `cat maintainerfile | grep $(echo $saying | sed s/nabb:// | cut -d ' ' -f 4 | sed s/?//g)` | cut -d ' ' -f 2- | tr '[:upper]' '[:lower]') 
-    lookerlook=$(echo $saying | sed s/nabb:// | cut -d ' ' -f 4 | sed s/?// | tr '[:upper]' '[:lower]')
+    lookbot=$(echo `cat maintainerfile | grep $(echo $saying | sed s/nabb:// | awk -F 'runs|owns|maintains' '{print $2}' | sed s/?//g | tr '[:upper:]' '[:lower:]')` | cut -d ' ' -f 2- | tr '[:upper:]' '[:lower:]')
+    lookerlook=$(echo $saying | sed s/nabb:// | awk -F 'runs|owns|maintains' '{print $2}' | sed s/?// | tr '[:upper:]' '[:lower:]' | sed s/^[[:space:]]*//)
     if ! grep "$lookerlook" maintainerfile >/dev/null; then
         echo "PRIVMSG $chan :$nick: I don't know anything about $lookerlook."
         continue
     else
-        echo "PRIVMSG $chan :$nick: $lookbot run(s), own(s) or maintain(s) $lookerlook."
+        echo "PRIVMSG $chan :$nick: [$lookbot] run(s), own(s) or maintain(s) $lookerlook."
     fi
 elif `echo $saying | grep -i '^nabb:' | grep 'run\|own\|maintain' | grep $'don\'t\|doesn\'t'> /dev/null` ; then
-    saying=$(echo $saying | sed s/nabb://g)
-    runner=$(echo $saying | cut -d ' ' -f 1 | tr '[:upper:]' '[:lower:]')
-    bot=$(echo $saying | cut -d ' ' -f 4 | tr '[:upper:]' '[:lower:]')
+    saying=$(echo $saying | sed s/nabb://g | tr '[:upper:]' '[:lower:]')
+    runner=$(echo $saying | awk -F 'run|own|maintain' '{print $1}' | tr '[:upper:]' '[:lower:]' | awk -F "don\'t|doesn\'t" '{print $1}' | sed s/^[[:space:]]*//)
+    bot=$(echo $saying | awk -F 'run|own|maintain' '{print $2}' | tr '[:upper:]' '[:lower:]' | sed s/^[[:space:]]*//)
     if [ "$name" = I ] ; then
         runner=$nick
     fi
     if [ "$name" = i ] ; then
         runner=$nick
     fi
+    echo "PRIVMSG $chan :$nick: $bot $runner"
     sed "/^$bot.*/ s/$runner, //" -i maintainerfile
     sed "/^$bot.*/ s/, $runner$//" -i maintainerfile
     sed "/^$bot.*/ s/ $runner$//" -i maintainerfile
@@ -111,20 +112,18 @@ elif `echo $saying | grep -i '^nabb:' | grep 'forget' > /dev/null` ; then
     if ! "$nick" = dom ; then
         continue
     fi
-    bot=$(echo $saying | cut -d ' ' -f 3 | tr '[:upper]' '[:lower]')
+    bot=$(echo $saying | awk -F 'forget' '{print $2}' | tr '[:upper:]' '[:lower:]' | sed s/^[[:space:]]//)
     sed "/^$bot.*$/d" -i maintainerfile
     echo "PRIVMSG $chan :$nick: I forgot about $bot."
 elif `echo $saying | grep -i '^nabb:' | grep 'run\|own\|maintain' > /dev/null` ; then
     saying=$(echo $saying | sed s/nabb://g | tr '[:upper:]' '[:lower:]')
-    lookbot=$(echo $saying | cut -d ' ' -f 1 | tr '[:upper:]' '[:lower:]')
-    if [ "$lookbot" = I ] ; then
-        nickadd=$nick
-    elif [ "$lookbot" = I ] ; then
+    lookbot=$(echo $saying | awk -F 'run[s]?|own[s]?|maintain[s]?' '{print $1}'| tr '[:upper:]' '[:lower:]' | sed s/[[:space:]]*$//)
+    if [ "$lookbot" = i ] ; then
         nickadd=$nick
     else
         nickadd=$lookbot
     fi
-    lookerlookbot=$(echo $saying | cut -d ' ' -f 3 | tr '[:upper]' '[:lower]')
+    lookerlookbot=$(echo $saying | awk -F 'run[s]?|own[s]?|maintain[s]?' '{print $2}' | tr '[:upper:]' '[:lower:]' | sed s/^[[:space:]]//)
     grep -q "$lookerlookbot" maintainerfile && sed "/^$lookerlookbot.*/ s/$/, $nickadd/" -i maintainerfile || echo "$lookerlookbot $nickadd" >> maintainerfile
     echo "PRIVMSG $chan :$nick: Noted. I've added it to my record."
 elif `echo $saying | grep -i 'assigned' | grep -i 'mwilliam' > /dev/null` ; then
@@ -138,9 +137,6 @@ elif `echo $saying | grep -i 'updated by' > /dev/null` ; then
             echo "PRIVMSG #snot :thyme: ^"
         fi
     fi
-elif `echo $saying | grep -i '!kekball' > /dev/null` ; then
-    kekball=`sed -n "$randint"p kekball`
-    echo "PRIVMSG $chan :$nick: $kekball"
 fi
 
 
