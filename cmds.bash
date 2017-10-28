@@ -5,14 +5,24 @@ randint=`dice 9`
 
 read nick chan saying
 if `echo $saying | grep -i '\bneed a\b' | grep -i '\bbot\b' > /dev/null` ; then
-    echo "PRIVMSG $chan :$nick: you could write it..."
+    echo "PRIVMSG $chan :$nick: you could write it... :^D"
     echo "$nick: $saying" >> ../botideas
 elif `echo $saying | grep -i 'bot \bneeds\b' > /dev/null` ; then
     echo "PRIVMSG $chan :$nick: make a pull request :^D"
     echo "$nick: $saying" >> ../botideas
+elif `echo $saying | grep -i 'bot' | grep -i 'should' | grep -i 'have' > /dev/null` ; then
+    echo "PRIVMSG $chan :$nick: you could write it... :^D"
+    echo "$nick: $saying" >> ../botideas
 elif `echo $saying | grep -i 'feature \brequest\b' > /dev/null` ; then
     echo "PRIVMSG $chan :$nick: make a pull request :^D"
     echo "$nick: $saying" >> ../botideas
+elif `echo $saying | grep -i '^nabb: botideas' > /dev/null` ; then
+    chop=$(shuf -n 1 ../botideas)
+    name=$(echo $chop | rev | cut -d ':' -f 2- | rev)
+    says=$(echo $chop | rev | cut -d ':' -f 1 | rev)
+    name=$(echo $name | sed s/[Aa]/4/g | sed s/[Ee]/3/g | sed s/[oO]/0/g | sed s/[iI]/1/g)
+    chop=\"$name:$says\"
+    echo "PRIVMSG $chan :$nick: $chop"   
 elif `echo $saying | grep -i 'nabb: source' > /dev/null` ; then
     echo "PRIVMSG $chan :$nick: http://goo.gl/IIQt53 is my source file"
 elif `echo $saying | grep -i '!dropthemic\b' > /dev/null` ; then
@@ -57,12 +67,9 @@ elif `echo $saying | grep -i 'nabb: make me a sandwich' > /dev/null` ; then
     else
        echo "PRIVMSG $chan :$nick: Ehhhhh, I dunno."
     fi        
-elif `echo $saying | grep -i 'nabb: help\b' > /dev/null` ; then
-    if [ "$nick" = dom ] ; then
-        echo "PRIVMSG $chan :dom: Shouldn't you already know?"    
-    else
-        echo "PRIVMSG $chan :$nick: ask me for my source!"
-    fi 
+elif `echo $saying | grep -i '^nabb: help$' > /dev/null` ; then
+    echo "PRIVMSG $chan :$nick: Reminds people complaining about bots that they could improve them as well."
+    echo "PRIVMSG $chan :$nick: Also keeps track of who owns what bot. Ask dom for details. source: http://goo.gl/IIQt53"
 elif `echo $saying | grep -i 'nabb: join\b' > /dev/null` ; then
     if [ "$nick" = dom ] ; then
         channel=`echo $saying | cut -d ' ' -f 3`
@@ -118,6 +125,10 @@ elif `echo $saying | grep -i '^nabb:' | grep 'forget' > /dev/null` ; then
 elif `echo $saying | grep -i '^nabb:' | grep 'run\|own\|maintain' > /dev/null` ; then
     saying=$(echo $saying | sed s/nabb://g | tr '[:upper:]' '[:lower:]')
     lookbot=$(echo $saying | awk -F 'run[s]?|own[s]?|maintain[s]?' '{print $1}'| tr '[:upper:]' '[:lower:]' | sed s/[[:space:]]*$//)
+    if [ "$lookbot" = who ] ; then
+        echo "PRIVMSG $chan :$nick: ask again, with a question mark at the end :^)"
+        exit
+    fi
     if [ "$lookbot" = i ] ; then
         nickadd=$nick
     else
